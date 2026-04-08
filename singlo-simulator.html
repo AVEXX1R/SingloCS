@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singlo — Simulador de Precificação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+  :root {
+    --bg: #00282f;
+    --bg2: #003a44;
+    --accent: #00909B;
+    --accent2: #00bfcc;
+    --glass: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.13);
+    --glass-hover: rgba(255,255,255,0.12);
+    --text: #e8f4f5;
+    --text-dim: rgba(232,244,245,0.55);
+    --danger: #ff4f6d;
+    --success: #00d4aa;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND MESH ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0,144,155,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(0,191,204,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0,40,47,0.8) 0%, transparent 100%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #001a1f 0%, #00282f 40%, #003a44 100%);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  #login-screen.hidden { opacity: 0; transform: scale(1.04); pointer-events: none; }
+
+  .login-card {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(32px) saturate(1.4);
+    -webkit-backdrop-filter: blur(32px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px;
+    padding: 48px 52px;
+    width: min(420px, 90vw);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(0,144,155,0.3), transparent 70%);
+    pointer-events: none;
+  }
+
+  .login-logo {
+    display: flex; justify-content: center;
+    margin-bottom: 36px;
+  }
+
+  .login-logo svg { width: 130px; height: auto; }
+
+  .login-title {
+    font-family: var(--font-head);
+    font-size: 1.1rem; font-weight: 500;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 32px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+  }
+
+  .field {
+    margin-bottom: 18px;
+    position: relative;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .field input {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+    background: rgba(0,144,155,0.1);
+    box-shadow: 0 0 0 3px rgba(0,144,155,0.15);
+  }
+
+  .field input::placeholder { color: rgba(255,255,255,0.25); }
+
+  .login-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: var(--font-head);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 8px 24px rgba(0,144,155,0.35);
+  }
+
+  .login-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,144,155,0.5); }
+  .login-btn:active { transform: translateY(0); }
+
+  .login-btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    pointer-events: none;
+  }
+
+  .login-error {
+    color: var(--danger);
+    font-size: 0.82rem;
+    text-align: center;
+    margin-top: 12px;
+    min-height: 18px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .login-error.show { opacity: 1; }
+
+  /* ── MAIN APP ── */
+  #app {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.7s ease 0.1s;
+  }
+  #app.visible { opacity: 1; }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px 56px;
+    background: linear-gradient(180deg, rgba(0,15,18,0.8) 0%, transparent 100%);
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.6;
+  }
+
+  .header-logo svg { width: 200px; height: auto; filter: drop-shadow(0 0 20px rgba(0,144,155,0.4)); }
+
+  .header-tagline {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 14px;
+  }
+
+  .header-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,144,155,0.15);
+    border: 1px solid rgba(0,144,155,0.3);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 18px;
+  }
+
+  .header-badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    flex: 1;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* ── HERO BUTTON ── */
+  .hero-section {
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .hero-text {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 12px;
+
+  /* 👇 CORREÇÃO DO EFEITO 4:3 */
+  max-width: 18ch;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  letter-spacing: -0.02em;
+
+  background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 1rem;
+    max-width: 480px;
+    line-height: 1.6;
+    margin-bottom: 36px;
+  }
+
+  .cta-btn {
+    position: relative;
+    padding: 18px 48px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border: none; border-radius: 100px;
+    color: #fff;
+    font-family: var(--font-head);
+    font-size: 1rem; font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 32px rgba(0,144,155,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .cta-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+    border-radius: inherit;
+  }
+
+  .cta-btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 16px 48px rgba(0,144,155,0.55); }
+  .cta-btn:active { transform: scale(0.98); }
+  .cta-btn.hidden-btn { opacity: 0; transform: translateY(20px) scale(0.9); pointer-events: none; transition: opacity 0.4s, transform 0.4s; }
+
+  /* ── PRODUCT GRID ── */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+  }
+
+  .products-grid.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
+
+  .product-pill {
+    position: relative;
+    padding: 22px 26px;
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
+    overflow: hidden;
+    text-align: left;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .product-pill::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+    border-radius: inherit;
+    opacity: 0; transition: opacity 0.3s;
+  }
+
+  .product-pill:hover { transform: translateY(-4px) scale(1.02); border-color: rgba(0,144,155,0.4); box-shadow: 0 12px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,144,155,0.2), inset 0 1px 0 rgba(255,255,255,0.1); }
+  .product-pill:hover::before { opacity: 1; }
+  .product-pill.active { border-color: var(--accent); background: rgba(0,144,155,0.12); box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(0,144,155,0.2); }
+
+  .pill-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 14px;
+    background: rgba(0,144,155,0.15);
+    border: 1px solid rgba(0,144,155,0.2);
+    
+  }
+
+  .pill-icon img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+  .pill-name {
+    font-family: var(--font-head);
+    font-size: 1rem; font-weight: 700;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .pill-desc {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .pill-arrow {
+    position: absolute; right: 20px; top: 50%;
+    transform: translateY(-50%) rotate(-45deg);
+    width: 20px; height: 20px;
+    border-right: 2px solid rgba(0,144,155,0.5);
+    border-top: 2px solid rgba(0,144,155,0.5);
+    transition: all 0.3s;
+  }
+
+  .product-pill:hover .pill-arrow { border-color: var(--accent2); transform: translateY(-50%) rotate(-45deg) translate(3px, -3px); }
+
+  /* ── SIMULATOR PANEL ── */
+  #simulator-panel {
+    margin-top: 40px;
+    display: none;
+  }
+
+  #simulator-panel.open { display: block; animation: slideIn 0.5s cubic-bezier(0.34, 1.2, 0.64, 1) forwards; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+
+  .panel-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .panel-icon {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+  .panel-back {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-dim);
+    font-size: 1.1rem;
+  }
+
+  .panel-back:hover { background: var(--glass-hover); color: #fff; }
+
+  .panel-title {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 1.5rem; font-weight: 800;
+  }
+
+  /* ── VCM SELECTOR ── */
+  .vcm-section {
+    margin-bottom: 32px;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, rgba(0,144,155,0.3), transparent);
+  }
+
+  .vcm-pills {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+
+  .vcm-pill {
+    padding: 8px 18px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 100px;
+    cursor: pointer;
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--text-dim);
+    transition: all 0.25s;
+  }
+
+  .vcm-pill:hover { border-color: rgba(0,144,155,0.4); color: var(--text); }
+  .vcm-pill.selected { background: rgba(0,144,155,0.2); border-color: var(--accent); color: var(--accent2); box-shadow: 0 0 0 1px rgba(0,144,155,0.3); }
+
+  /* ── PRICE TABLE ── */
+  .price-table-wrapper {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  .price-table {
+    width: 100%; border-collapse: collapse;
+  }
+
+  .price-table thead tr {
+    background: rgba(0,144,155,0.12);
+    border-bottom: 1px solid rgba(0,144,155,0.2);
+  }
+
+  .price-table thead th {
+    padding: 14px 20px;
+    text-align: left;
+    font-family: var(--font-head);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .price-table tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.2s;
+  }
+
+  .price-table tbody tr:last-child { border-bottom: none; }
+  .price-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+  .price-table tbody td {
+    padding: 16px 20px;
+    font-size: 0.88rem;
+    vertical-align: middle;
+  }
+
+  .price-table .td-name { color: var(--text); font-weight: 500; }
+  .price-table .td-supplier { color: var(--text-dim); font-size: 0.78rem; }
+
+  .price-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--success);
+  }
+
+  .price-tag.cost { color: var(--text-dim); font-size: 0.82rem; font-weight: 500; }
+
+  .margin-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 0.72rem; font-weight: 700;
+    background: rgba(0,212,170,0.12);
+    border: 1px solid rgba(0,212,170,0.25);
+    color: var(--success);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── SUMMARY CARD ── */
+  .summary-card {
+    margin-top: 24px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px;
+  }
+
+  .summary-item {
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  .summary-item .s-label {
+    font-size: 0.7rem; font-weight: 600; color: var(--text-dim);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  .summary-item .s-value {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 1.6rem; font-weight: 800;
+    color: var(--accent2);
+  }
+
+  .summary-item .s-value.green { color: var(--success); }
+  .summary-item .s-value.orange { color: #ffaa44; }
+
+  /* ── FALENCIA SPECIAL ── */
+  .falencia-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;
+  }
+
+  .falencia-card {
+    background: var(--glass);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+    transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+
+  .falencia-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.5;
+  }
+
+  .falencia-card:hover { transform: translateY(-4px); border-color: rgba(0,144,155,0.35); }
+
+  .falencia-card .fc-plan {
+    font-family: var(--font-head); font-size: 0.75rem; font-weight: 700;
+    color: var(--accent2); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px;
+  }
+
+  .falencia-card .fc-price {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; font-size: 2.4rem; font-weight: 800; color: #fff;
+    line-height: 1;
+  }
+
+  .falencia-card .fc-unit { font-size: 0.8rem; color: var(--text-dim); margin: 8px 0 14px; }
+
+  .falencia-card .fc-include {
+    font-size: 0.78rem; color: var(--text-dim); line-height: 1.6;
+    border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; margin-top: 4px;
+  }
+
+  .fc-free { background: rgba(0,212,170,0.08); border-color: rgba(0,212,170,0.25); }
+  .fc-free .fc-price { color: var(--success); }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .login-card { padding: 36px 28px; }
+    main { padding: 40px 16px 60px; }
+    .price-table thead th, .price-table tbody td { padding: 12px 12px; }
+  }
+
+  /* ── FLOATING PARTICLES ── */
+  .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .particle {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: rgba(0,191,204,0.4);
+    animation: float linear infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(110vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-10vh) translateX(var(--dx)); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PARTICLES -->
+<div class="particles" id="particles"></div>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="151" height="37" viewBox="0 0 151 37" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_login)">
+          <path d="M128.519 36.6878C124.284 36.6878 120.68 35.2211 117.704 32.2848C114.728 29.3486 113.26 25.745 113.26 21.4255C113.26 17.1059 114.725 13.5023 117.704 10.5661C120.68 7.62984 124.284 6.16309 128.519 6.16309C132.754 6.16309 136.355 7.62984 139.332 10.5661C142.308 13.5023 143.776 17.1059 143.776 21.4255C143.776 25.745 142.311 29.3513 139.332 32.2848C136.355 35.2184 132.751 36.6878 128.519 36.6878ZM128.519 30.148C130.949 30.148 132.963 29.3513 134.597 27.715C136.233 26.0814 137.07 23.9849 137.07 21.4255C137.07 18.866 136.233 16.7722 134.597 15.1359C132.963 13.5023 130.952 12.7056 128.519 12.7056C126.086 12.7056 124.034 13.5023 122.398 15.1359C120.764 16.7722 119.968 18.8687 119.968 21.4255C119.968 23.9822 120.764 26.0814 122.398 27.715C124.031 29.3486 126.086 30.148 128.519 30.148Z" fill="white"/>
+          <path d="M33.9573 6.47266V36.6879H27.1865V6.47266H33.9573Z" fill="white"/>
+          <path d="M103.002 0.46582V6.82805V30.3258V36.688H109.794V30.3258V6.82805V0.46582H103.002Z" fill="white"/>
+          <path d="M51.747 13.0151C49.5889 13.0151 47.8547 13.6476 46.5474 14.9152C45.24 16.1828 44.5849 17.8756 44.5849 19.9937V36.6878H37.7354V19.9937C37.7354 17.9994 38.0887 16.1532 38.7927 14.4496C39.4994 12.746 40.4752 11.2846 41.7201 10.0574C42.9649 8.83286 44.4381 7.87744 46.1424 7.19116C47.8439 6.50488 49.7112 6.16309 51.747 6.16309C53.7829 6.16309 55.6502 6.50488 57.3517 7.19116C59.0532 7.87744 60.5264 8.83286 61.774 10.0574C63.0189 11.2819 63.9838 12.746 64.6688 14.4496C65.3537 16.1532 65.6962 17.9994 65.6962 19.9937V36.6878H58.8466V19.9937C58.8466 17.8756 58.2025 16.1828 56.9168 14.9152C55.6284 13.6476 53.9052 13.0151 51.747 13.0151Z" fill="white"/>
+          <path d="M146.967 5.9668C147.951 5.9668 148.78 6.30321 149.457 6.97065C150.133 7.64079 150.47 8.46163 150.47 9.43588C150.47 10.4101 150.131 11.2148 149.457 11.8554C148.78 12.4932 147.951 12.8135 146.967 12.8135C145.983 12.8135 145.17 12.4932 144.523 11.8554C143.879 11.2175 143.556 10.4101 143.556 9.43588C143.556 8.46163 143.879 7.64079 144.523 6.97065C145.167 6.30052 145.983 5.9668 146.967 5.9668Z" fill="#00909B"/>
+          <path d="M99.5329 21.4311C99.5329 22.3784 99.4568 23.2935 99.3155 24.1627C99.2041 24.8275 99.0627 25.4788 98.8643 26.1112C98.1603 28.4285 96.8855 30.4873 95.04 32.2932C92.0392 35.2213 88.3916 36.6907 84.116 36.6907C79.8405 36.6907 76.2037 35.2213 73.1921 32.2932C72.1048 31.2274 71.2133 30.0755 70.5338 28.8321C69.3134 26.6468 68.71 24.187 68.71 21.4338C68.71 20.7905 68.7426 20.1715 68.8078 19.5741C69.1802 16.07 70.6316 13.0665 73.1921 10.5744C76.2037 7.63547 79.8405 6.16602 84.116 6.16602C88.3916 6.16602 92.0392 7.63547 95.04 10.5744C95.4341 10.9538 95.7983 11.3468 96.1272 11.7478L90.5551 15.4698C90.4682 15.3595 90.3703 15.2518 90.2589 15.1415C88.609 13.4998 86.5759 12.7059 84.116 12.7059C81.6562 12.7059 79.5877 13.4998 77.9378 15.1415C76.6957 16.3607 75.9373 17.8301 75.6411 19.5714C75.5296 20.1581 75.4753 20.7798 75.4753 21.4311C75.4753 22.7686 75.6954 23.9905 76.1466 25.0778C76.5516 26.0574 77.1469 26.9375 77.9378 27.7206C79.5877 29.3543 81.6643 30.1482 84.116 30.1482C86.5677 30.1482 88.609 29.3543 90.2589 27.7206C90.7536 27.2308 91.1803 26.6872 91.5228 26.1086H84.4558V19.6414H99.4432C99.5058 20.2173 99.5329 20.8121 99.5329 21.4311Z" fill="white"/>
+          <path d="M24.2726 27.7796C24.2726 29.1764 24.0035 30.4386 23.4627 31.5663C22.9218 32.6966 22.1498 33.6547 21.1441 34.4406C20.1384 35.2264 18.9316 35.8374 17.5209 36.268C16.1103 36.6986 14.5365 36.9139 12.7969 36.9139C10.8752 36.9139 9.14382 36.677 7.59996 36.2007C6.05609 35.7243 4.74326 35.0488 3.66146 34.1741C2.58239 33.2968 1.75609 32.2283 1.1853 30.9661C0.6145 29.7039 0.329102 28.299 0.329102 26.7542H6.6296C6.6296 28.1214 7.17594 29.1899 8.27132 29.9623C9.36671 30.7347 10.8725 31.1222 12.7942 31.1222C14.3544 31.1222 15.5993 30.8396 16.5288 30.2744C17.4584 29.7093 17.9232 28.953 17.9232 28.0003C17.9232 27.0476 17.4883 26.329 16.6185 25.7504C15.7487 25.1717 14.2783 24.6738 12.2071 24.2567C8.48605 23.4843 5.76525 22.3486 4.03928 20.8468C2.3133 19.3478 1.45167 17.4369 1.45167 15.1197C1.45167 13.7822 1.71532 12.5657 2.23991 11.4649C2.7645 10.3669 3.5011 9.42225 4.44427 8.63639C5.39016 7.85053 6.52903 7.23961 7.86361 6.809C9.19818 6.37839 10.6605 6.16309 12.2506 6.16309C13.8407 6.16309 15.303 6.38646 16.6376 6.83053C17.9721 7.27459 19.1192 7.90705 20.0814 8.7252C21.0408 9.54336 21.791 10.5068 22.3319 11.621C22.8728 12.7352 23.1419 13.9598 23.1419 15.2974H16.8414C16.8414 14.3473 16.4065 13.5588 15.5367 12.9371C14.667 12.3127 13.558 12.0005 12.2071 12.0005C10.8562 12.0005 9.74724 12.2374 8.96715 12.7137C8.18706 13.1901 7.79566 13.8441 7.79566 14.673C7.79566 15.5019 8.26045 16.2393 9.19003 16.791C10.1196 17.3401 11.6961 17.8676 13.9168 18.3735C17.5155 19.1755 20.1412 20.3274 21.791 21.8265C23.4409 23.3282 24.2672 25.309 24.2672 27.7769L24.2726 27.7796Z" fill="white"/>
+        </g>
+        <defs><clipPath id="clip0_login"><rect width="151" height="37" fill="white"/></clipPath></defs>
+      </svg>
+    </div>
+    <div class="login-title">Simulador de Precificação — CS</div>
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" id="login-user" placeholder="Seu usuário" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="app">
+  <header>
+    <div class="header-logo">
+      <svg width="151" height="37" viewBox="0 0 151 37" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_header)">
+          <path d="M128.519 36.6878C124.284 36.6878 120.68 35.2211 117.704 32.2848C114.728 29.3486 113.26 25.745 113.26 21.4255C113.26 17.1059 114.725 13.5023 117.704 10.5661C120.68 7.62984 124.284 6.16309 128.519 6.16309C132.754 6.16309 136.355 7.62984 139.332 10.5661C142.308 13.5023 143.776 17.1059 143.776 21.4255C143.776 25.745 142.311 29.3513 139.332 32.2848C136.355 35.2184 132.751 36.6878 128.519 36.6878ZM128.519 30.148C130.949 30.148 132.963 29.3513 134.597 27.715C136.233 26.0814 137.07 23.9849 137.07 21.4255C137.07 18.866 136.233 16.7722 134.597 15.1359C132.963 13.5023 130.952 12.7056 128.519 12.7056C126.086 12.7056 124.034 13.5023 122.398 15.1359C120.764 16.7722 119.968 18.8687 119.968 21.4255C119.968 23.9822 120.764 26.0814 122.398 27.715C124.031 29.3486 126.086 30.148 128.519 30.148Z" fill="white"/>
+          <path d="M33.9573 6.47266V36.6879H27.1865V6.47266H33.9573Z" fill="white"/>
+          <path d="M103.002 0.46582V6.82805V30.3258V36.688H109.794V30.3258V6.82805V0.46582H103.002Z" fill="white"/>
+          <path d="M51.747 13.0151C49.5889 13.0151 47.8547 13.6476 46.5474 14.9152C45.24 16.1828 44.5849 17.8756 44.5849 19.9937V36.6878H37.7354V19.9937C37.7354 17.9994 38.0887 16.1532 38.7927 14.4496C39.4994 12.746 40.4752 11.2846 41.7201 10.0574C42.9649 8.83286 44.4381 7.87744 46.1424 7.19116C47.8439 6.50488 49.7112 6.16309 51.747 6.16309C53.7829 6.16309 55.6502 6.50488 57.3517 7.19116C59.0532 7.87744 60.5264 8.83286 61.774 10.0574C63.0189 11.2819 63.9838 12.746 64.6688 14.4496C65.3537 16.1532 65.6962 17.9994 65.6962 19.9937V36.6878H58.8466V19.9937C58.8466 17.8756 58.2025 16.1828 56.9168 14.9152C55.6284 13.6476 53.9052 13.0151 51.747 13.0151Z" fill="white"/>
+          <path d="M146.967 5.9668C147.951 5.9668 148.78 6.30321 149.457 6.97065C150.133 7.64079 150.47 8.46163 150.47 9.43588C150.47 10.4101 150.131 11.2148 149.457 11.8554C148.78 12.4932 147.951 12.8135 146.967 12.8135C145.983 12.8135 145.17 12.4932 144.523 11.8554C143.879 11.2175 143.556 10.4101 143.556 9.43588C143.556 8.46163 143.879 7.64079 144.523 6.97065C145.167 6.30052 145.983 5.9668 146.967 5.9668Z" fill="#00909B"/>
+          <path d="M99.5329 21.4311C99.5329 22.3784 99.4568 23.2935 99.3155 24.1627C99.2041 24.8275 99.0627 25.4788 98.8643 26.1112C98.1603 28.4285 96.8855 30.4873 95.04 32.2932C92.0392 35.2213 88.3916 36.6907 84.116 36.6907C79.8405 36.6907 76.2037 35.2213 73.1921 32.2932C72.1048 31.2274 71.2133 30.0755 70.5338 28.8321C69.3134 26.6468 68.71 24.187 68.71 21.4338C68.71 20.7905 68.7426 20.1715 68.8078 19.5741C69.1802 16.07 70.6316 13.0665 73.1921 10.5744C76.2037 7.63547 79.8405 6.16602 84.116 6.16602C88.3916 6.16602 92.0392 7.63547 95.04 10.5744C95.4341 10.9538 95.7983 11.3468 96.1272 11.7478L90.5551 15.4698C90.4682 15.3595 90.3703 15.2518 90.2589 15.1415C88.609 13.4998 86.5759 12.7059 84.116 12.7059C81.6562 12.7059 79.5877 13.4998 77.9378 15.1415C76.6957 16.3607 75.9373 17.8301 75.6411 19.5714C75.5296 20.1581 75.4753 20.7798 75.4753 21.4311C75.4753 22.7686 75.6954 23.9905 76.1466 25.0778C76.5516 26.0574 77.1469 26.9375 77.9378 27.7206C79.5877 29.3543 81.6643 30.1482 84.116 30.1482C86.5677 30.1482 88.609 29.3543 90.2589 27.7206C90.7536 27.2308 91.1803 26.6872 91.5228 26.1086H84.4558V19.6414H99.4432C99.5058 20.2173 99.5329 20.8121 99.5329 21.4311Z" fill="white"/>
+          <path d="M24.2726 27.7796C24.2726 29.1764 24.0035 30.4386 23.4627 31.5663C22.9218 32.6966 22.1498 33.6547 21.1441 34.4406C20.1384 35.2264 18.9316 35.8374 17.5209 36.268C16.1103 36.6986 14.5365 36.9139 12.7969 36.9139C10.8752 36.9139 9.14382 36.677 7.59996 36.2007C6.05609 35.7243 4.74326 35.0488 3.66146 34.1741C2.58239 33.2968 1.75609 32.2283 1.1853 30.9661C0.6145 29.7039 0.329102 28.299 0.329102 26.7542H6.6296C6.6296 28.1214 7.17594 29.1899 8.27132 29.9623C9.36671 30.7347 10.8725 31.1222 12.7942 31.1222C14.3544 31.1222 15.5993 30.8396 16.5288 30.2744C17.4584 29.7093 17.9232 28.953 17.9232 28.0003C17.9232 27.0476 17.4883 26.329 16.6185 25.7504C15.7487 25.1717 14.2783 24.6738 12.2071 24.2567C8.48605 23.4843 5.76525 22.3486 4.03928 20.8468C2.3133 19.3478 1.45167 17.4369 1.45167 15.1197C1.45167 13.7822 1.71532 12.5657 2.23991 11.4649C2.7645 10.3669 3.5011 9.42225 4.44427 8.63639C5.39016 7.85053 6.52903 7.23961 7.86361 6.809C9.19818 6.37839 10.6605 6.16309 12.2506 6.16309C13.8407 6.16309 15.303 6.38646 16.6376 6.83053C17.9721 7.27459 19.1192 7.90705 20.0814 8.7252C21.0408 9.54336 21.791 10.5068 22.3319 11.621C22.8728 12.7352 23.1419 13.9598 23.1419 15.2974H16.8414C16.8414 14.3473 16.4065 13.5588 15.5367 12.9371C14.667 12.3127 13.558 12.0005 12.2071 12.0005C10.8562 12.0005 9.74724 12.2374 8.96715 12.7137C8.18706 13.1901 7.79566 13.8441 7.79566 14.673C7.79566 15.5019 8.26045 16.2393 9.19003 16.791C10.1196 17.3401 11.6961 17.8676 13.9168 18.3735C17.5155 19.1755 20.1412 20.3274 21.791 21.8265C23.4409 23.3282 24.2672 25.309 24.2672 27.7769L24.2726 27.7796Z" fill="white"/>
+        </g>
+        <defs><clipPath id="clip0_header"><rect width="151" height="37" fill="white"/></clipPath></defs>
+      </svg>
+    </div>
+    <div class="header-tagline">Sistema de Análise de Crédito</div>
+    <div class="header-badge"><span></span> Simulador de Precificação 2026</div>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <div class="hero-section">
+      <div class="hero-text">Simule preços em segundos</div>
+      <div class="hero-sub">Selecione o produto e o volume de consultas para ver as tabelas de preços e margens em tempo real.</div>
+      <button class="cta-btn" id="cta-btn" onclick="showProducts()">✦ Quero Simular</button>
+    </div>
+
+    <!-- PRODUCT PILLS -->
+    <div class="products-grid" id="products-grid">
+      <div class="product-pill" onclick="openProduct('falencia')">
+        <div class="pill-icon">⚖️</div>
+        <div class="pill-name">Falência e RJ</div>
+        <div class="pill-desc">Relatório de Falência e Recuperação Judicial — Leme</div>
+        <div class="pill-arrow"></div>
+      </div>
+      <div class="product-pill" onclick="openProduct('quod')">
+        <div class="pill-icon">🔍</div>
+        <div class="pill-name">Quod</div>
+        <div class="pill-desc">Consultas PF/PJ, Verifiq, Analytics e módulos de score</div>
+        <div class="pill-arrow"></div>
+      </div>
+      <div class="product-pill" onclick="openProduct('scr')">
+        <div class="pill-icon">🏦</div>
+        <div class="pill-name">SCR</div>
+        <div class="pill-desc">Relatório de Sistema de Crédito — Completo e Analítico</div>
+        <div class="pill-arrow"></div>
+      </div>
+      <div class="product-pill" onclick="openProduct('serasa')">
+        <div class="pill-icon">
+         <img src="Serasa.png" alt="Serasa" class="pill-img"> 
+        </div>
+        <div class="pill-name">Serasa</div>
+        <div class="pill-desc">Relatórios Básicos/Avançados PF/PJ e módulos adicionais</div>
+        <div class="pill-arrow"></div>
+      </div>
+    </div>
+
+    <!-- SIMULATOR PANEL -->
+    <div id="simulator-panel">
+      <div class="panel-header">
+        <div class="panel-back" onclick="closeProduct()">←</div>
+        <div class="panel-title" id="panel-title">—</div>
+      </div>
+      <div id="panel-content"></div>
+    </div>
+  </main>
+
+  <footer>© 2026 Singlo — Uso interno exclusivo para o time de CS</footer>
+</div>
+
+<script>
+// ── AUTH ──
+const CREDS = { u: 'SingloCS', p: 'Singlo@2026' };
+
+function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-error');
+  if (u === CREDS.u && p === CREDS.p) {
+    document.getElementById('login-screen').classList.add('hidden');
+    const app = document.getElementById('app');
+    app.classList.add('visible');
+    setTimeout(() => { document.getElementById('login-screen').style.display = 'none'; }, 800);
+  } else {
+    err.classList.add('show');
+    const card = document.querySelector('.login-card');
+    card.style.animation = 'none';
+    card.offsetHeight;
+    card.style.animation = 'shake 0.4s ease';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+// Shake animation
+const style = document.createElement('style');
+style.textContent = '@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}';
+document.head.appendChild(style);
+
+// ── PARTICLES ──
+(function() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const left = Math.random() * 100;
+    const dur = 12 + Math.random() * 18;
+    const delay = -Math.random() * dur;
+    const dx = (Math.random() - 0.5) * 200;
+    p.style.cssText = `left:${left}%;--dx:${dx}px;animation-duration:${dur}s;animation-delay:${delay}s;opacity:${0.2 + Math.random()*0.5};width:${2+Math.random()*3}px;height:${2+Math.random()*3}px`;
+    container.appendChild(p);
+  }
+})();
+
+// ── DATA ──
+const VCM_LEVELS = ['Avulso', '500', '1000', '2500', '5000', '7500', '10000', '15000'];
+const VCM_LABELS = { 'Avulso': 'Avulso', '500': '500 consultas', '1000': '1.000 consultas', '2500': '2.500 consultas', '5000': '5.000 consultas', '7500': '7.500 consultas', '10000': '10.000 consultas', '15000': '15.000 consultas' };
+
+const DATA = {
+  serasa: {
+    title: 'Serasa',
+    vcms: {
+      'Avulso': { margin: 500, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:18.61},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:18.61},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:89.41},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:55.07},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:16.50},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:29.08},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:12.20},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:19.45},
+      ]},
+      '500': { margin: 400, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:16.92},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:16.92},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:81.28},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:50.06},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:15.00},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:26.43},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:11.09},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:17.68},
+      ]},
+      '1000': { margin: 350, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:15.23},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:15.23},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:73.15},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:45.06},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:13.50},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:23.79},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:9.98},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:15.91},
+      ]},
+      '2500': { margin: 300, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:13.54},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:13.54},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:65.03},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:40.05},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:12.00},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:21.15},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:8.87},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:14.14},
+      ]},
+      '5000': { margin: 250, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:11.85},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:11.85},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:56.90},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:35.05},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:10.50},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:18.50},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:7.76},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:12.38},
+      ]},
+      '7500': { margin: 275, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:12.69},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:12.69},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:60.96},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:37.55},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:11.25},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:19.82},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:8.31},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:13.26},
+      ]},
+      '10000': { margin: 150, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:8.46},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:8.46},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:40.64},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:25.03},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:7.50},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:13.22},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:5.54},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:8.84},
+      ]},
+      '15000': { margin: 180, items: [
+        {name:'Relatório Básico PF', supplier:'SERASA', cost:2.90, price:9.48},
+        {name:'Relatório Básico PJ', supplier:'SERASA', cost:2.90, price:9.48},
+        {name:'Relatório Avançado PF', supplier:'SERASA', cost:13.93, price:45.52},
+        {name:'Relatório Avançado PJ', supplier:'SERASA', cost:8.58, price:28.04},
+        {name:'Faturamento Presumido - Avançado PJ', supplier:'SERASA', cost:2.57, price:8.40},
+        {name:'Histórico Positivo Comercial - Avançado PJ', supplier:'SERASA', cost:4.53, price:14.80},
+        {name:'Participações em Empresas - Avançado PJ', supplier:'SERASA', cost:1.90, price:6.21},
+        {name:'Quadro Social e ADM - Avançado PJ', supplier:'SERASA', cost:3.03, price:9.90},
+      ]},
+    }
+  },
+  scr: {
+    title: 'SCR',
+    vcms: {
+      'Avulso': { margin: 250, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:11.85},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:6.94},
+      ]},
+      '500': { margin: 200, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:10.15},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:5.95},
+      ]},
+      '1000': { margin: 180, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:9.48},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:5.55},
+      ]},
+      '2500': { margin: 160, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:8.80},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:5.16},
+      ]},
+      '5000': { margin: 140, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:8.12},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:4.76},
+      ]},
+      '7500': { margin: 120, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:7.45},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:4.36},
+      ]},
+      '10000': { margin: 100, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:6.77},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:3.97},
+      ]},
+      '15000': { margin: 80, items: [
+        {name:'Relatório SCR - Completo', supplier:'DIRECT DATA', cost:2.90, price:6.09},
+        {name:'Relatório SCR - Analítico', supplier:'DIRECT DATA', cost:1.70, price:3.57},
+      ]},
+    }
+  },
+  quod: {
+    title: 'Quod',
+    vcms: {
+      'Avulso': { margin: 300, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:8.78},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:7.14},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:26.05},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:13.30},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:16.20},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:5.69},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:5.69},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:3.97},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:4.90},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:4.01},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:5.46},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:2.94},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:5.46},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:5.46},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:4.29},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:6.44},
+      ]},
+      '500': { margin: 450, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:12.07},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:9.82},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:35.82},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:18.29},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:22.27},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:7.83},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:7.83},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:5.46},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:6.74},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:5.52},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:7.51},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:4.04},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:7.51},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:7.51},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:5.91},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:8.86},
+      ]},
+      '1000': { margin: 400, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:10.97},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:8.93},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:32.56},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:16.63},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:20.25},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:7.12},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:7.12},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:4.96},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:6.13},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:5.02},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:6.83},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:3.68},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:6.83},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:6.83},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:5.37},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:8.05},
+      ]},
+      '2500': { margin: 350, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:9.87},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:8.03},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:29.30},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:14.97},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:18.22},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:6.41},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:6.41},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:4.46},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:5.51},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:4.52},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:6.14},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:3.31},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:6.14},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:6.14},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:4.83},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:7.25},
+      ]},
+      '5000': { margin: 300, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:8.78},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:7.14},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:26.05},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:13.30},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:16.20},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:5.69},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:5.69},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:3.97},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:4.90},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:4.01},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:5.46},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:2.94},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:5.46},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:5.46},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:4.29},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:6.44},
+      ]},
+      '7500': { margin: 275, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:8.23},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:6.70},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:24.42},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:12.47},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:15.19},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:5.34},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:5.34},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:3.72},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:4.60},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:3.76},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:5.12},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:2.76},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:5.12},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:5.12},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:4.03},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:6.04},
+      ]},
+      '10000': { margin: 250, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:7.68},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:6.25},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:22.79},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:11.64},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:14.17},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:4.98},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:4.98},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:3.47},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:4.29},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:3.51},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:4.78},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:2.57},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:4.78},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:4.78},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:3.76},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:5.64},
+      ]},
+      '15000': { margin: 200, items: [
+        {name:'Quod Consulta PJ Completa', supplier:'QUOD', cost:1.88, price:6.58},
+        {name:'Quod Consulta PF Completa', supplier:'QUOD', cost:1.53, price:5.36},
+        {name:'Quod Verifiq Completo - Score PJ Integral', supplier:'QUOD', cost:5.58, price:19.54},
+        {name:'Quod Verifiq Módulo Analytics Completo', supplier:'QUOD', cost:2.85, price:9.98},
+        {name:'Quod Verifiq Módulo Comportamental', supplier:'QUOD', cost:3.47, price:12.15},
+        {name:'Quod Verifiq Módulo Cadastral', supplier:'QUOD', cost:1.22, price:4.27},
+        {name:'Quod Verifiq Módulo Restrições e Passagens', supplier:'QUOD', cost:1.22, price:4.27},
+        {name:'Quod Verifiq Módulo Analytics - Inadimplência PJ', supplier:'QUOD', cost:0.85, price:2.98},
+        {name:'Quod Verifiq Módulo Analytics - + Negócio PJ', supplier:'QUOD', cost:1.05, price:3.68},
+        {name:'Quod Verifiq Módulo Analytics - Grau de Atividade', supplier:'QUOD', cost:0.86, price:3.01},
+        {name:'Quod Verifiq Módulo Analytics - Faturamento Presumido', supplier:'QUOD', cost:1.17, price:4.10},
+        {name:'Quod Verifiq Módulo Analytics - Score PJ', supplier:'QUOD', cost:0.63, price:2.21},
+        {name:'Quod Verifiq Módulo Analytics - Limite de Crédito PJ', supplier:'QUOD', cost:1.17, price:4.10},
+        {name:'Quod Verifiq Módulo Analytics - Gasto Estimado PJ', supplier:'QUOD', cost:1.17, price:4.10},
+        {name:'Quod Gasto Estimado PF 2 + Faixa de Gasto', supplier:'QUOD', cost:0.92, price:3.22},
+        {name:'Quod Gasto Estimado PF 2 + Renda Presumida 2ª Gen.', supplier:'QUOD', cost:1.38, price:4.83},
+      ]},
+    }
+  }
+};
+
+let currentProduct = null;
+let currentVcm = 'Avulso';
+
+function fmt(v) {
+  return 'R$ ' + v.toFixed(2).replace('.', ',');
+}
+
+function showProducts() {
+  const btn = document.getElementById('cta-btn');
+  btn.classList.add('hidden-btn');
+  setTimeout(() => {
+    btn.style.display = 'none';
+    const grid = document.getElementById('products-grid');
+    grid.classList.add('visible');
+  }, 380);
+}
+
+function openProduct(key) {
+  currentProduct = key;
+  currentVcm = 'Avulso';
+
+  document.querySelectorAll('.product-pill').forEach(p => p.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  const panel = document.getElementById('simulator-panel');
+  const title = document.getElementById('panel-title');
+
+  if (key === 'falencia') {
+    title.textContent = '⚖️ Falência e Recuperação Judicial';
+    document.getElementById('panel-content').innerHTML = renderFalencia();
+  } else {
+    const prod = DATA[key];
+   title.innerHTML = {
+  quod: '🔍 Quod',
+  scr: '🏦 SCR',
+  serasa: '<img src="Serasa.png" class="panel-icon"> Serasa'
+}[key];
+    document.getElementById('panel-content').innerHTML = renderVcmProduct(key);
+    setVcm('Avulso');
+  }
+
+  panel.classList.remove('open');
+  void panel.offsetWidth;
+  panel.style.display = 'block';
+  panel.classList.add('open');
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function closeProduct() {
+  const panel = document.getElementById('simulator-panel');
+  panel.style.display = 'none';
+  panel.classList.remove('open');
+  document.querySelectorAll('.product-pill').forEach(p => p.classList.remove('active'));
+  currentProduct = null;
+}
+
+function renderFalencia() {
+  return `
+    <div class="section-label">Planos disponíveis</div>
+    <div class="falencia-grid">
+      <div class="falencia-card">
+        <div class="fc-plan">Avulso</div>
+        <div class="fc-price">R$ 1,50</div>
+        <div class="fc-unit">por consulta</div>
+        <div class="fc-include">Custo: R$ 0,00<br>Pay-as-you-go — sem comprometimento</div>
+      </div>
+      <div class="falencia-card">
+        <div class="fc-plan">1.000 Consultas</div>
+        <div class="fc-price">R$ 1,00</div>
+        <div class="fc-unit">por consulta</div>
+        <div class="fc-include">Custo: R$ 0,00<br>Total do pacote: R$ 1.000,00</div>
+      </div>
+      <div class="falencia-card fc-free">
+        <div class="fc-plan">Ilimitado — VCM 1.500</div>
+        <div class="fc-price">Incluso</div>
+        <div class="fc-unit">sem custo adicional</div>
+        <div class="fc-include">5.000 consultas/mês inclusas<br>Custo: R$ 0,00</div>
+      </div>
+      <div class="falencia-card fc-free">
+        <div class="fc-plan">Ilimitado — VCM 2.500</div>
+        <div class="fc-price">Incluso</div>
+        <div class="fc-unit">sem custo adicional</div>
+        <div class="fc-include">15.000 consultas/mês inclusas<br>Custo: R$ 0,00</div>
+      </div>
+      <div class="falencia-card fc-free">
+        <div class="fc-plan">Ilimitado — VCM 3.500</div>
+        <div class="fc-price">Incluso</div>
+        <div class="fc-unit">sem custo adicional</div>
+        <div class="fc-include">Pacote ilimitado de consultas<br>Custo: R$ 0,00</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderVcmProduct(key) {
+  const vcms = Object.keys(DATA[key].vcms);
+  return `
+    <div class="vcm-section">
+      <div class="section-label">Volume de Consultas Mensais (VCM)</div>
+      <div class="vcm-pills">
+        ${vcms.map(v => `<div class="vcm-pill ${v === 'Avulso' ? 'selected' : ''}" onclick="setVcm('${v}')">${VCM_LABELS[v] || v}</div>`).join('')}
+      </div>
+    </div>
+    <div id="table-area"></div>
+    <div id="summary-area"></div>
+  `;
+}
+
+function setVcm(vcm) {
+  currentVcm = vcm;
+  document.querySelectorAll('.vcm-pill').forEach(p => {
+    p.classList.toggle('selected', p.textContent.trim() === (VCM_LABELS[vcm] || vcm));
+  });
+  const data = DATA[currentProduct].vcms[vcm];
+
+  const avgMargin = data.margin;
+  const avgPrice = data.items.reduce((s, i) => s + i.price, 0) / data.items.length;
+  const avgCost = data.items.reduce((s, i) => s + i.cost, 0) / data.items.length;
+
+  document.getElementById('table-area').innerHTML = `
+    <div class="price-table-wrapper">
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th>Relatório</th>
+            <th>Fornecedor</th>
+            <th>Custo</th>
+            <th>Venda</th>
+            <th>Margem</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.items.map(item => {
+            const margin = ((item.price - item.cost) / item.cost * 100).toFixed(0);
+            return `<tr>
+              <td class="td-name">${item.name}</td>
+              <td class="td-supplier">${item.supplier}</td>
+              <td><span class="price-tag cost">${fmt(item.cost)}</span></td>
+              <td><span class="price-tag">${fmt(item.price)}</span></td>
+              <td><span class="margin-badge">${margin}%</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('summary-area').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-item">
+        <div class="s-label">VCM Selecionado</div>
+        <div class="s-value">${VCM_LABELS[vcm] || vcm}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Margem do Plano</div>
+        <div class="s-value orange">${data.margin}%</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Preço Médio de Venda</div>
+        <div class="s-value green">${fmt(avgPrice)}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Custo Médio</div>
+        <div class="s-value" style="color:var(--text-dim);font-size:1.3rem">${fmt(avgCost)}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Qtd. de Produtos</div>
+        <div class="s-value" style="color:var(--text)">${data.items.length}</div>
+      </div>
+    </div>
+  `;
+}
+
+// Enter on login fields
+['login-user','login-pass'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+});
+</script>
+</body>
+</html>

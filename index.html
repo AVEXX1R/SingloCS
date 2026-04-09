@@ -363,9 +363,15 @@
     
   }
 
-  .pill-icon img {
+  .serasa-logo {
   width: 56px;
   height: 56px;
+  object-fit: contain;
+}
+
+  .quod-logo {
+  width: 26px;
+  height: 26px;
   object-fit: contain;
 }
 
@@ -802,11 +808,11 @@
   .prop-table thead th:last-child { border-right: none; }
 
   .prop-table tbody tr {
-    border-bottom: 1px solid #d1c4e9;
-    background: #fff;
+    border-bottom: 1px solid #000000;
+    background: #e6e6e6;
   }
 
-  .prop-table tbody tr:nth-child(even) { background: #faf5ff; }
+  .prop-table tbody tr:nth-child(even) { background: #e6e6e6; }
 
   .prop-table tbody tr:last-child { border-bottom: none; }
 
@@ -814,7 +820,7 @@
     padding: 13px 18px;
     font-size: 0.85rem;
     color: #2d2d2d;
-    border-right: 1px solid #e8d5f5;
+    border-right: 1px solid #000000;
     vertical-align: middle;
     font-style: italic;
     text-align: center;
@@ -842,7 +848,7 @@
   }
 
   .prop-table-section-header td {
-    background: rgba(107,33,168,0.06) !important;
+    background: rgba(69 69 69 / 13%) !important;
     font-style: normal !important;
     font-weight: 700 !important;
     font-size: 0.75rem !important;
@@ -850,8 +856,15 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 8px 18px !important;
-    border-bottom: 1px solid #d1c4e9;
+    border-bottom: 1px solid #bfbfbf;
   }
+
+  .prop-table .prop-total-row {
+    background: #e6e6e6 !important;
+    border-top: 2px solid #00909b;
+  }
+
+  .prop-table .prop-total-row td { font-style: normal !important; }
 
   .proposal-actions {
     display: flex; gap: 12px; justify-content: flex-end;
@@ -993,7 +1006,7 @@
         <div class="pill-arrow"></div>
       </div>
       <div class="product-pill" onclick="openProduct('quod')">
-        <div class="pill-icon">🔍</div>
+        <div class="pill-icon"><img src="Quod.png" alt="quod" class="quod-logo"></div>
         <div class="pill-name">Quod</div>
         <div class="pill-desc">Consultas PF/PJ, Verifiq, Analytics e módulos de score</div>
         <div class="pill-arrow"></div>
@@ -1006,7 +1019,7 @@
       </div>
       <div class="product-pill" onclick="openProduct('serasa')">
         <div class="pill-icon">
-         <img src="serasa.png" alt="Serasa" class="pill-img"> 
+         <img src="serasa.png" alt="Serasa" class="serasa-logo"> 
         </div>
         <div class="pill-name">Serasa</div>
         <div class="pill-desc">Relatórios Básicos/Avançados PF/PJ e módulos adicionais</div>
@@ -1591,27 +1604,34 @@ function setVcm(vcm, scroll = true) {
 }
 
 // ── PROPOSAL GENERATION ──
-function openProposal() {
-  const rows = [];
+function parseBRL(str) {
+  // "R$ 1.500,00" → 1500.00
+  if (!str || str === '—' || str === 'ilimitado') return 0;
+  return parseFloat(str.replace('R$','').replace(/\./g,'').replace(',','.').trim()) || 0;
+}
 
-  // Falencia
+function openProposal() {
+  // Each group: { sectionLabel, items: [{name, price, isIlimitado}], consumoLabel, consumoValue }
+  const groups = [];
+
+  // ── Falencia ──
   const falenciaPlans = [
-    { key: 'avulso', name: 'Monitor de Falências e Recuperação Judicial', price: 'R$ 1,50', unit: 'por consulta', consumo: null },
-    { key: '1000', name: 'Monitor de Falências e Recuperação Judicial', price: 'R$ 1,00', unit: 'por consulta', consumo: 'R$ 1.000,00' },
-    { key: 'ilimitado', name: 'Monitor de Falências e Recuperação Judicial', price: 'ilimitado', unit: null, consumo: 'R$ 1.500,00' },
+    { key: 'avulso',    name: 'Monitor de Falências e Recuperação Judicial — Avulso',    price: 'R$ 1,50',     consumo: '—',           consumoVal: 0,      isIlimitado: false },
+    { key: '1000',      name: 'Monitor de Falências e Recuperação Judicial — Pacote 1.000', price: 'R$ 1,00',  consumo: 'R$ 1.000,00', consumoVal: 1000,   isIlimitado: false },
+    { key: 'ilimitado', name: 'Monitor de Falências e Recuperação Judicial — Ilimitado', price: 'ilimitado',   consumo: 'R$ 1.500,00', consumoVal: 1500,   isIlimitado: true  },
   ];
 
-  const falRows = falenciaPlans.filter(p => selections.falencia[p.key]);
-  if (falRows.length) {
-    rows.push({ section: 'Falência e Recuperação Judicial' });
-    falRows.forEach(p => rows.push({
-      name: p.name + (p.key === '1000' ? ' — Pacote 1.000' : p.key === 'ilimitado' ? ' — Ilimitado' : ' — Avulso'),
-      price: p.price,
-      consumo: p.consumo || '—'
-    }));
-  }
+  // Each falencia plan is its own group (consumo per-plan is independent)
+  falenciaPlans.filter(p => selections.falencia[p.key]).forEach(p => {
+    groups.push({
+      sectionLabel: 'Falência e Recuperação Judicial',
+      items: [{ name: p.name, price: p.price, isIlimitado: p.isIlimitado }],
+      consumoLabel: p.consumo,
+      consumoVal: p.consumoVal
+    });
+  });
 
-  // Quod / SCR / Serasa
+  // ── Quod / SCR / Serasa ──
   ['quod', 'scr', 'serasa'].forEach(k => {
     const itemSel = selections[k].items;
     const vcm = selections[k].vcm || 'Avulso';
@@ -1623,26 +1643,54 @@ function openProposal() {
 
     const sectionName = { quod: 'Quod', scr: 'SCR', serasa: 'Serasa' }[k];
     const vcmLabel = VCM_LABELS[vcm] || vcm;
-    rows.push({ section: `${sectionName} — VCM ${vcmLabel}` });
-    checkedItems.forEach(item => {
-      rows.push({ name: item.name, price: fmt(item.price), consumo: vcmLabel === 'Avulso' ? '—' : vcmLabel });
+    const consumoLabel = vcm === 'Avulso' ? '—' : vcmLabel;
+    const consumoVal = vcm === 'Avulso' ? 0 : parseBRL(vcmLabel);
+
+    groups.push({
+      sectionLabel: `${sectionName} — VCM ${vcmLabel}`,
+      items: checkedItems.map(item => ({ name: item.name, price: fmt(item.price), isIlimitado: false })),
+      consumoLabel,
+      consumoVal
     });
   });
 
-  if (rows.length === 0) { alert('Nenhum item selecionado!'); return; }
+  if (groups.length === 0) { alert('Nenhum item selecionado!'); return; }
 
-  // Build table
+  // ── Build table with rowspan ──
   let tbody = '';
-  rows.forEach(r => {
-    if (r.section) {
-      tbody += `<tr class="prop-table-section-header"><td colspan="3">${r.section}</td></tr>`;
-    } else {
-      const priceCell = r.price === 'ilimitado'
+  let totalGeral = 0;
+
+  groups.forEach(group => {
+    const count = group.items.length;
+    totalGeral += group.consumoVal;
+
+    // Section header row
+    tbody += `<tr class="prop-table-section-header"><td colspan="3">${group.sectionLabel}</td></tr>`;
+
+    // Item rows — consumo cell only on first row with rowspan=count
+    group.items.forEach((item, i) => {
+      const priceCell = item.isIlimitado
         ? `<td class="td-ilimitado">ilimitado</td>`
-        : `<td class="td-price">${r.price}</td>`;
-      tbody += `<tr><td>${r.name}</td>${priceCell}<td class="td-consumo">${r.consumo}</td></tr>`;
-    }
+        : `<td class="td-price">${item.price}</td>`;
+
+      const consumoCell = i === 0
+        ? `<td class="td-consumo" rowspan="${count}" style="vertical-align:middle;border-left:1px solid #000000;">${group.consumoLabel}</td>`
+        : '';
+
+      tbody += `<tr><td>${item.name}</td>${priceCell}${consumoCell}</tr>`;
+    });
   });
+
+  // ── Total Geral row ──
+  const totalLabel = totalGeral > 0 ? fmt(totalGeral) : '—';
+  tbody += `
+    <tr class="prop-total-row">
+      <td colspan="2" style="text-align:right;font-weight:700;font-style:normal;font-family:system-ui,sans-serif;color:#1a1a2e;letter-spacing:0.05em;text-transform:uppercase;font-size:0.82rem;">
+        TOTAL GERAL
+      </td>
+      <td class="td-consumo" style="font-size:1.05rem;border-left:1px solid #000000;">${totalLabel}</td>
+    </tr>
+  `;
 
   document.getElementById('proposal-table-container').innerHTML = `
     <table class="prop-table" id="prop-table-print">
@@ -1673,23 +1721,25 @@ function printProposal() {
     <!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>Proposta — Singlo</title>
     <style>
-      body { font-family: system-ui,sans-serif; background:#fff; padding: 40px; color:#2d2d2d; }
+      body { font-family: system-ui, sans-serif; background-image: linear-gradient(to right, #08321b, #07301c, #062f1d, #062d1e, #072b1f, #07291e, #07281d, #07261c, #062419, #052116, #031f13, #001d10); padding: 40px; color: #2d2d2d; min-height: 100vh; }
       h2 { font-size:1.5rem; font-weight:800; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
-      .header-box { background:linear-gradient(135deg, #00282f, #003a44); padding:20px; border-radius:12px; border:1px solid #e9d5ff; margin-bottom:24px; }
-      table { width:100%; border-collapse:collapse; border:1.5px solid #6b21a8; font-family:'Georgia',serif; }
+      .header-box { background:linear-gradient(135deg, #00282f, #003a44); padding:20px; border-radius:12px; border:1px solid #000000; margin-bottom:24px; }
+      table { width:100%; border-collapse:collapse; border:1.5px solid #000000; font-family:'Georgia',serif; }
       thead tr { background:#1a1a2e; }
       thead th { padding:12px 16px; color:#fff; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; text-align:center; border-right:1px solid rgba(255,255,255,0.1); }
       thead th:first-child { text-align:left; }
       thead th:last-child { border-right:none; }
-      tbody tr { border-bottom:1px solid #d1c4e9; }
-      tbody tr:nth-child(even) { background:#faf5ff; }
-      tbody td { padding:12px 16px; font-size:0.85rem; font-style:italic; text-align:center; border-right:1px solid #e8d5f5; }
+      tbody tr { background:#e6e6e6;border-bottom:1px solid #000000; }
+      tbody tr:nth-child(even) { background:#e6e6e6; }
+      tbody td { padding:12px 16px; font-size:0.85rem; font-style:italic; text-align:center; border-right:1px solid #000000; }
       tbody td:first-child { text-align:left; font-weight:500; }
       tbody td:last-child { border-right:none; }
       .td-price { font-weight:700; color:#1a1a2e; font-style:normal; font-family:system-ui,sans-serif; }
-      .td-consumo { font-weight:700; color:#6b21a8; font-style:normal; font-family:system-ui,sans-serif; }
-      .td-ilimitado { color:#6b21a8; font-style:italic; font-weight:600; }
-      .prop-table-section-header td { background:rgba(107,33,168,0.06)!important; font-style:normal!important; font-weight:700!important; font-size:0.72rem!important; color:#00909b !important; letter-spacing:0.08em; text-transform:uppercase; padding:8px 16px!important; }
+      .td-consumo { font-weight:700; color:#00909b; font-style:normal; font-family:system-ui,sans-serif; vertical-align:middle; }
+      .td-ilimitado { color:#00909b; font-style:italic; font-weight:600; }
+      .prop-total-row { background:#e6e6e6 !important; border-top:2px solid #00909b; }
+      .prop-total-row td { font-style:normal !important; }
+      .prop-table-section-header td { background:rgb(0 0 0 / 24%)!important; font-style:normal!important; font-weight:700!important; font-size:0.72rem!important; color:#00909b !important; letter-spacing:0.08em; text-transform:uppercase; padding:8px 16px!important; }
       @media print { body { padding:20px; } }
     </style>
     </head><body>

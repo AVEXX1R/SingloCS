@@ -625,7 +625,124 @@
   .fc-free { background: rgba(0,212,170,0.08); border-color: rgba(0,212,170,0.25); }
   .fc-free .fc-price { color: var(--success); }
 
-  /* ── CHECK BUTTON ── */
+  /* ── ESTEIRA / CONSULTORIA PANEL ── */
+  .simple-product-panel {
+    background: var(--glass);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  .sp-row {
+    display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap;
+  }
+
+  .sp-check-area {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 0 8px;
+  }
+
+  .sp-check-label {
+    font-size: 0.82rem; color: var(--text-dim); font-weight: 500;
+  }
+
+  .sp-check-label.active { color: var(--accent2); }
+
+  .sp-input-group {
+    display: flex; flex-direction: column; gap: 6px;
+    flex: 1; min-width: 160px;
+  }
+
+  .sp-input-label {
+    font-size: 0.72rem; color: var(--accent2);
+    font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .sp-input {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--font-head);
+    font-size: 1.1rem; font-weight: 700;
+    width: 100%; max-width: 140px;
+    outline: none;
+    transition: border-color 0.3s, background 0.3s;
+    text-align: center;
+  }
+
+  .sp-input:focus {
+    border-color: var(--accent);
+    background: rgba(0,144,155,0.1);
+    box-shadow: 0 0 0 3px rgba(0,144,155,0.15);
+  }
+
+  .sp-unit-price {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex; flex-direction: column; gap: 2px; align-items: center;
+  }
+
+  .sp-unit-price .label { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; text-transform: uppercase; }
+  .sp-unit-price .value { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; color: var(--accent2); }
+
+  .sp-total-box {
+    margin-top: 24px;
+    background: rgba(0,144,155,0.08);
+    border: 1px solid rgba(0,144,155,0.25);
+    border-radius: 16px;
+    padding: 20px 28px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+
+  .sp-total-label { font-size: 0.75rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase; }
+
+  .sp-total-value { system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
+
+  .sp-margin-info { font-size: 0.8rem; color: var(--text-dim); margin-top: 6px; }
+
+  /* Consultoria margin slider */
+  .margin-slider-wrap {
+    margin-top: 16px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    padding: 18px 22px;
+  }
+
+  .margin-slider-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .margin-slider-title { font-size: 0.72rem; font-weight: 600; color: var(--accent2); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .margin-slider-val {
+    font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
+    color: #ffaa44;
+  }
+
+  input[type=range].margin-range {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent) var(--pct, 100%), rgba(255,255,255,0.1) var(--pct, 100%));
+    outline: none; cursor: pointer;
+  }
+
+  input[type=range].margin-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 2px 8px rgba(0,144,155,0.5);
+    cursor: pointer;
+  }
   .item-check {
     width: 26px; height: 26px; min-width: 26px;
     border-radius: 8px;
@@ -1025,6 +1142,30 @@
         <div class="pill-desc">Relatórios Básicos/Avançados PF/PJ e módulos adicionais</div>
         <div class="pill-arrow"></div>
       </div>
+      <div class="product-pill" onclick="openProduct('esteira')">
+        <div class="pill-icon">👤</div>
+        <div class="pill-name">Usuário de Esteira</div>
+        <div class="pill-desc">Licenças adicionais de usuário com precificação por volume</div>
+        <div class="pill-arrow"></div>
+      </div>
+      <div class="product-pill" onclick="openProduct('consultoria')">
+        <div class="pill-icon">🎓</div>
+        <div class="pill-name">Horas de Consultoria</div>
+        <div class="pill-desc">Pacote de horas de consultoria especializada — R$ 210,00/h</div>
+        <div class="pill-arrow"></div>
+      </div>
+      <div class="product-pill" onclick="openProduct('monitoramento')">
+        <div class="pill-icon">📡</div>
+        <div class="pill-name">Monitoramento</div>
+        <div class="pill-desc">Monitoramento contínuo de carteiras de crédito</div>
+        <div class="pill-arrow"></div>
+      </div>
+      <div class="product-pill" onclick="openProduct('balanco')">
+        <div class="pill-icon">🤖</div>
+        <div class="pill-name">Balanço AI</div>
+        <div class="pill-desc">Análise de balanço com inteligência artificial</div>
+        <div class="pill-arrow"></div>
+      </div>
     </div>
 
     <!-- SIMULATOR PANEL -->
@@ -1391,7 +1532,31 @@ const DATA = {
   }
 };
 
-let currentProduct = null;
+// ── MONITORAMENTO DATA ──
+const DATA_MONO = {
+  vcms: {
+    '250':   { vcmVal: 875,   unitPrice: 3.50, items: [{name:'Monitoramento de Carteira', supplier:'Singlo'}] },
+    '500':   { vcmVal: 1460,  unitPrice: 2.92, items: [{name:'Monitoramento de Carteira', supplier:'Singlo'}] },
+    '1000':  { vcmVal: 2570,  unitPrice: 2.57, items: [{name:'Monitoramento de Carteira', supplier:'Singlo'}] },
+    '2500':  { vcmVal: 5825,  unitPrice: 2.33, items: [{name:'Monitoramento de Carteira', supplier:'Singlo'}] },
+    '5000':  { vcmVal: 10500, unitPrice: 2.10, items: [{name:'Monitoramento de Carteira', supplier:'Singlo'}] },
+    '10000': { vcmVal: 19500, unitPrice: 1.95, items: [{name:'Monitoramento de Carteira', supplier:'Singlo'}] },
+  }
+};
+const MONO_LABELS = { '250':'250 consultas','500':'500 consultas','1000':'1.000 consultas','2500':'2.500 consultas','5000':'5.000 consultas','10000':'10.000 consultas' };
+
+// ── BALANÇO AI DATA ──
+const DATA_BALANCO = {
+  vcms: {
+    '1':     { vcmVal: 0,     unitPrice: 25.00, items: [{name:'Balanço AI — Análise Unitária', supplier:'Singlo'}] },
+    '100':   { vcmVal: 1500,  unitPrice: 15.00, items: [{name:'Balanço AI — Pacote 100', supplier:'Singlo'}] },
+    '500':   { vcmVal: 6000,  unitPrice: 12.00, items: [{name:'Balanço AI — Pacote 500', supplier:'Singlo'}] },
+    '1000':  { vcmVal: 10000, unitPrice: 10.00, items: [{name:'Balanço AI — Pacote 1.000', supplier:'Singlo'}] },
+    '5000':  { vcmVal: 40000, unitPrice: 8.50,  items: [{name:'Balanço AI — Pacote 5.000', supplier:'Singlo'}] },
+    '10000': { vcmVal: 50000, unitPrice: 5.00,  items: [{name:'Balanço AI — Pacote 10.000', supplier:'Singlo'}] },
+  }
+};
+const BALANCO_LABELS = { '1':'1 consulta','100':'100 consultas','500':'500 consultas','1000':'1.000 consultas','5000':'5.000 consultas','10000':'10.000 consultas' };
 let currentVcm = 'Avulso';
 
 // ── SELECTION STATE ──
@@ -1400,7 +1565,11 @@ const selections = {
   falencia: { avulso: false, '1000': false, ilimitado: false },
   quod: { vcm: 'Avulso', items: {} },
   scr: { vcm: 'Avulso', items: {} },
-  serasa: { vcm: 'Avulso', items: {} }
+  serasa: { vcm: 'Avulso', items: {} },
+  monitoramento: { vcm: '250', items: {} },
+  balanco: { vcm: '1', items: {} },
+  esteira: { checked: false, qty: 1 },
+  consultoria: { checked: false, hours: 1, margin: 100 }
 };
 
 function fmt(v) {
@@ -1409,12 +1578,12 @@ function fmt(v) {
 
 function updateProposalBar() {
   let total = 0;
-  // Falencia
   Object.values(selections.falencia).forEach(v => { if(v) total++; });
-  // Others
-  ['quod','scr','serasa'].forEach(k => {
+  ['quod','scr','serasa','monitoramento','balanco'].forEach(k => {
     Object.values(selections[k].items).forEach(v => { if(v) total++; });
   });
+  if (selections.esteira.checked) total++;
+  if (selections.consultoria.checked) total++;
 
   const countEl = document.getElementById('proposal-count');
   const btnEl = document.getElementById('proposal-btn');
@@ -1453,6 +1622,20 @@ function openProduct(key) {
   if (key === 'falencia') {
     title.textContent = '⚖️ Falência e Recuperação Judicial';
     document.getElementById('panel-content').innerHTML = renderFalencia();
+  } else if (key === 'esteira') {
+    title.textContent = '👤 Usuário de Esteira';
+    document.getElementById('panel-content').innerHTML = renderEsteira();
+  } else if (key === 'consultoria') {
+    title.textContent = '🎓 Horas de Consultoria';
+    document.getElementById('panel-content').innerHTML = renderConsultoria();
+  } else if (key === 'monitoramento') {
+    title.textContent = '📡 Monitoramento';
+    document.getElementById('panel-content').innerHTML = renderMonoOrBalanco('monitoramento');
+    setMonoVcm(selections.monitoramento.vcm || '250');
+  } else if (key === 'balanco') {
+    title.textContent = '🤖 Balanço AI';
+    document.getElementById('panel-content').innerHTML = renderMonoOrBalanco('balanco');
+    setMonoVcm(selections.balanco.vcm || '1');
   } else {
     title.innerHTML = {
       quod: '🔍 Quod',
@@ -1603,6 +1786,258 @@ function setVcm(vcm, scroll = true) {
   `;
 }
 
+// ── ESTEIRA ──
+function getEsteiraUnitPrice(qty) {
+  if (qty <= 0) return 0;
+  if (qty === 1) return 500;
+  if (qty === 2) return 480;
+  if (qty === 3) return 450;
+  if (qty === 4) return 430;
+  return 400;
+}
+
+function renderEsteira() {
+  const s = selections.esteira;
+  const qty = s.qty || 1;
+  const unit = getEsteiraUnitPrice(qty);
+  const total = qty * unit;
+  return `
+    <div class="simple-product-panel">
+      <div class="sp-check-area">
+        <div class="item-check ${s.checked ? 'checked' : ''}" id="esteira-check" onclick="toggleEsteiraCheck(this)" title="Selecionar para proposta"></div>
+        <span class="sp-check-label ${s.checked ? 'active' : ''}" id="esteira-check-label">${s.checked ? 'Selecionado para proposta' : 'Marcar para proposta'}</span>
+      </div>
+      <div class="sp-row" style="margin-top:12px; align-items:flex-end; gap:24px; flex-wrap:wrap;">
+        <div class="sp-input-group">
+          <div class="sp-input-label">Nº de Usuários</div>
+          <input type="number" class="sp-input" id="esteira-qty" value="${qty}" min="1" max="999" oninput="updateEsteira(this.value)">
+        </div>
+        <div class="sp-unit-price">
+          <div class="label">Valor Unitário</div>
+          <div class="value" id="esteira-unit">${fmt(unit)}</div>
+        </div>
+        <div class="sp-unit-price" style="background:rgba(0,212,170,0.08);border-color:rgba(0,212,170,0.25);">
+          <div class="label">Margem</div>
+          <div class="value" style="color:var(--success)">—</div>
+        </div>
+      </div>
+      <div class="sp-total-box" style="margin-top:24px;">
+        <div>
+          <div class="sp-total-label">Total Mensal</div>
+          <div class="sp-margin-info" id="esteira-formula">${qty} usuário(s) × ${fmt(unit)}</div>
+        </div>
+        <div class="sp-total-value" id="esteira-total">${fmt(total)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleEsteiraCheck(el) {
+  selections.esteira.checked = !selections.esteira.checked;
+  el.classList.toggle('checked', selections.esteira.checked);
+  const lbl = document.getElementById('esteira-check-label');
+  if (lbl) { lbl.textContent = selections.esteira.checked ? 'Selecionado para proposta' : 'Marcar para proposta'; lbl.className = 'sp-check-label' + (selections.esteira.checked ? ' active' : ''); }
+  updateProposalBar();
+}
+
+function updateEsteira(val) {
+  const qty = Math.max(1, parseInt(val) || 1);
+  selections.esteira.qty = qty;
+  const unit = getEsteiraUnitPrice(qty);
+  const total = qty * unit;
+  const el = document.getElementById('esteira-unit'); if (el) el.textContent = fmt(unit);
+  const tot = document.getElementById('esteira-total'); if (tot) tot.textContent = fmt(total);
+  const form = document.getElementById('esteira-formula'); if (form) form.textContent = `${qty} usuário(s) × ${fmt(unit)}`;
+}
+
+// ── CONSULTORIA ──
+const CONSULTORIA_PRICE_BASE = 210;
+const CONSULTORIA_MARGIN_MIN = 80;
+
+function getConsultoriaPrice(margin) {
+  // margin 100 → R$210, margin 80 → R$168
+  return CONSULTORIA_PRICE_BASE * (margin / 100);
+}
+
+function renderConsultoria() {
+  const s = selections.consultoria;
+  const hours = s.hours || 1;
+  const margin = s.margin !== undefined ? s.margin : 100;
+  const unitPrice = getConsultoriaPrice(margin);
+  const total = hours * unitPrice;
+  const pct = ((margin - CONSULTORIA_MARGIN_MIN) / (100 - CONSULTORIA_MARGIN_MIN)) * 100;
+  return `
+    <div class="simple-product-panel">
+      <div class="sp-check-area">
+        <div class="item-check ${s.checked ? 'checked' : ''}" id="consult-check" onclick="toggleConsultCheck(this)" title="Selecionar para proposta"></div>
+        <span class="sp-check-label ${s.checked ? 'active' : ''}" id="consult-check-label">${s.checked ? 'Selecionado para proposta' : 'Marcar para proposta'}</span>
+      </div>
+      <div class="sp-row" style="margin-top:12px; align-items:flex-end; gap:24px; flex-wrap:wrap;">
+        <div class="sp-input-group">
+          <div class="sp-input-label">Horas Contratadas</div>
+          <input type="number" class="sp-input" id="consult-hours" value="${hours}" min="1" max="9999" oninput="updateConsultoria()">
+        </div>
+        <div class="sp-unit-price">
+          <div class="label">Valor/Hora</div>
+          <div class="value" id="consult-unit">${fmt(unitPrice)}</div>
+        </div>
+        <div class="sp-unit-price" style="background:rgba(255,170,68,0.08);border-color:rgba(255,170,68,0.25);">
+          <div class="label">Margem</div>
+          <div class="value" style="color:#ffaa44" id="consult-margin-display">${margin}%</div>
+        </div>
+      </div>
+      <div class="margin-slider-wrap" style="margin-top:16px;">
+        <div class="margin-slider-header">
+          <span class="margin-slider-title">Ajuste de Margem — mínimo 80%</span>
+          <span class="margin-slider-val" id="consult-margin-val">${margin}% → ${fmt(unitPrice)}/h</span>
+        </div>
+        <input type="range" class="margin-range" id="consult-margin-slider"
+          min="${CONSULTORIA_MARGIN_MIN}" max="100" step="1" value="${margin}"
+          style="--pct:${pct}%"
+          oninput="updateConsultoriaMargin(this.value)">
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.7rem;color:var(--text-dim);">
+          <span>80% → ${fmt(getConsultoriaPrice(80))}/h</span>
+          <span>100% → ${fmt(CONSULTORIA_PRICE_BASE)}/h</span>
+        </div>
+      </div>
+      <div class="sp-total-box" style="margin-top:20px;">
+        <div>
+          <div class="sp-total-label">Total</div>
+          <div class="sp-margin-info" id="consult-formula">${hours}h × ${fmt(unitPrice)}</div>
+        </div>
+        <div class="sp-total-value" id="consult-total">${fmt(total)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleConsultCheck(el) {
+  selections.consultoria.checked = !selections.consultoria.checked;
+  el.classList.toggle('checked', selections.consultoria.checked);
+  const lbl = document.getElementById('consult-check-label');
+  if (lbl) { lbl.textContent = selections.consultoria.checked ? 'Selecionado para proposta' : 'Marcar para proposta'; lbl.className = 'sp-check-label' + (selections.consultoria.checked ? ' active' : ''); }
+  updateProposalBar();
+}
+
+function updateConsultoria() {
+  const hours = Math.max(1, parseInt(document.getElementById('consult-hours').value) || 1);
+  selections.consultoria.hours = hours;
+  const margin = selections.consultoria.margin || 100;
+  const unit = getConsultoriaPrice(margin);
+  const total = hours * unit;
+  const el = document.getElementById('consult-unit'); if (el) el.textContent = fmt(unit);
+  const tot = document.getElementById('consult-total'); if (tot) tot.textContent = fmt(total);
+  const form = document.getElementById('consult-formula'); if (form) form.textContent = `${hours}h × ${fmt(unit)}`;
+}
+
+function updateConsultoriaMargin(val) {
+  const margin = parseInt(val);
+  selections.consultoria.margin = margin;
+  const unit = getConsultoriaPrice(margin);
+  const hours = parseInt(document.getElementById('consult-hours').value) || 1;
+  selections.consultoria.hours = hours;
+  const total = hours * unit;
+  const pct = ((margin - CONSULTORIA_MARGIN_MIN) / (100 - CONSULTORIA_MARGIN_MIN)) * 100;
+  const slider = document.getElementById('consult-margin-slider');
+  if (slider) slider.style.setProperty('--pct', pct + '%');
+  const display = document.getElementById('consult-margin-display'); if (display) display.textContent = margin + '%';
+  const valEl = document.getElementById('consult-margin-val'); if (valEl) valEl.textContent = `${margin}% → ${fmt(unit)}/h`;
+  const unitEl = document.getElementById('consult-unit'); if (unitEl) unitEl.textContent = fmt(unit);
+  const tot = document.getElementById('consult-total'); if (tot) tot.textContent = fmt(total);
+  const form = document.getElementById('consult-formula'); if (form) form.textContent = `${hours}h × ${fmt(unit)}`;
+}
+
+// ── MONITORAMENTO / BALANÇO (generic VCM table) ──
+function renderMonoOrBalanco(key) {
+  const labels = key === 'monitoramento' ? MONO_LABELS : BALANCO_LABELS;
+  const vcms = Object.keys(key === 'monitoramento' ? DATA_MONO.vcms : DATA_BALANCO.vcms);
+  const curVcm = selections[key].vcm || vcms[0];
+  return `
+    <div class="vcm-section">
+      <div class="section-label">Pacote de Consultas</div>
+      <div class="vcm-pills">
+        ${vcms.map(v => `<div class="vcm-pill ${v === curVcm ? 'selected' : ''}" onclick="setMonoVcm('${v}')">${labels[v]}</div>`).join('')}
+      </div>
+    </div>
+    <div id="table-area"></div>
+    <div id="summary-area"></div>
+  `;
+}
+
+function setMonoVcm(vcm) {
+  const key = currentProduct; // 'monitoramento' or 'balanco'
+  selections[key].vcm = vcm;
+  const dataSource = key === 'monitoramento' ? DATA_MONO : DATA_BALANCO;
+  const labels = key === 'monitoramento' ? MONO_LABELS : BALANCO_LABELS;
+  const data = dataSource.vcms[vcm];
+
+  document.querySelectorAll('.vcm-pill').forEach(p => {
+    p.classList.toggle('selected', p.textContent.trim() === labels[vcm]);
+  });
+
+  const itemKey = vcm + '-0';
+  const isChecked = !!selections[key].items[itemKey];
+
+  document.getElementById('table-area').innerHTML = `
+    <div class="price-table-wrapper">
+      <table class="price-table">
+        <thead>
+          <tr>
+            <th class="td-check"></th>
+            <th>Produto</th>
+            <th>VCM</th>
+            <th>Valor Unitário</th>
+            <th>Margem</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="${isChecked ? 'row-checked' : ''}">
+            <td class="td-check">
+              <div class="item-check ${isChecked ? 'checked' : ''}" onclick="toggleMonoCheck('${key}','${vcm}',this)" title="Selecionar para proposta"></div>
+            </td>
+            <td class="td-name">${data.items[0].name}</td>
+            <td><span class="price-tag">${fmt(data.vcmVal)}</span></td>
+            <td><span class="price-tag">${fmt(data.unitPrice)}</span></td>
+            <td><span class="margin-badge">—</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById('summary-area').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-item">
+        <div class="s-label">Pacote Selecionado</div>
+        <div class="s-value" style="font-size:1.1rem">${labels[vcm]}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">VCM</div>
+        <div class="s-value green">${fmt(data.vcmVal)}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Valor Unitário</div>
+        <div class="s-value" style="color:var(--accent2)">${fmt(data.unitPrice)}</div>
+      </div>
+      <div class="summary-item">
+        <div class="s-label">Margem</div>
+        <div class="s-value orange">—</div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleMonoCheck(key, vcm, el) {
+  const itemKey = vcm + '-0';
+  // Clear all other vcm selections for this product (only one at a time)
+  selections[key].items = {};
+  const wasChecked = !el.classList.contains('checked');
+  selections[key].items[itemKey] = wasChecked;
+  el.classList.toggle('checked', wasChecked);
+  el.closest('tr').classList.toggle('row-checked', wasChecked);
+  updateProposalBar();
+}
+
 // ── PROPOSAL GENERATION ──
 function parseBRL(str) {
   // "R$ 1.500,00" → 1500.00
@@ -1653,6 +2088,51 @@ function openProposal() {
       consumoVal
     });
   });
+
+  // ── Monitoramento ──
+  ['monitoramento', 'balanco'].forEach(k => {
+    const itemSel = selections[k].items;
+    const vcm = selections[k].vcm;
+    if (!vcm) return;
+    const dataSource = k === 'monitoramento' ? DATA_MONO : DATA_BALANCO;
+    const labels = k === 'monitoramento' ? MONO_LABELS : BALANCO_LABELS;
+    const data = dataSource.vcms[vcm];
+    if (!data || !itemSel[vcm + '-0']) return;
+    const sectionName = k === 'monitoramento' ? 'Monitoramento' : 'Balanço AI';
+    groups.push({
+      sectionLabel: `${sectionName} — ${labels[vcm]}`,
+      items: [{ name: data.items[0].name, price: fmt(data.unitPrice), isIlimitado: false }],
+      consumoLabel: fmt(data.vcmVal),
+      consumoVal: data.vcmVal
+    });
+  });
+
+  // ── Esteira ──
+  if (selections.esteira.checked) {
+    const qty = selections.esteira.qty || 1;
+    const unit = getEsteiraUnitPrice(qty);
+    const total = qty * unit;
+    groups.push({
+      sectionLabel: 'Usuário de Esteira',
+      items: [{ name: `Usuário de Esteira — ${qty} usuário(s)`, price: fmt(unit) + '/usuário', isIlimitado: false }],
+      consumoLabel: fmt(total),
+      consumoVal: total
+    });
+  }
+
+  // ── Consultoria ──
+  if (selections.consultoria.checked) {
+    const hours = selections.consultoria.hours || 1;
+    const margin = selections.consultoria.margin !== undefined ? selections.consultoria.margin : 100;
+    const unit = getConsultoriaPrice(margin);
+    const total = hours * unit;
+    groups.push({
+      sectionLabel: 'Horas de Consultoria',
+      items: [{ name: `Consultoria Especializada — ${hours}h (margem ${margin}%)`, price: fmt(unit) + '/h', isIlimitado: false }],
+      consumoLabel: fmt(total),
+      consumoVal: total
+    });
+  }
 
   if (groups.length === 0) { alert('Nenhum item selecionado!'); return; }
 

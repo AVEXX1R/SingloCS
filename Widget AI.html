@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <title>Agente - Preview</title>
+  <style>
+    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f0f0f0; min-height: 100vh; }
+    h1 { color: #333; }
+    p { color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Preview do Widget</h1>
+  <p>O chat flutuante aparece no canto inferior direito.</p>
+
+  <!-- Inclui o widget -->
+  <script src="agent-widget.js"></script>
+  <script>
+    AgentWidget.init({
+      apiUrl: window.location.origin,
+    });
+  </script>
+</body>
+</html>
